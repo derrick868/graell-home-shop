@@ -1,15 +1,38 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, User } from "lucide-react";
+import { ShoppingCart, User, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Header = () => {
   const { user } = useAuth();
   const { getCartItemCount } = useCart();
   const navigate = useNavigate();
   const cartItemCount = getCartItemCount();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        
+        setIsAdmin(data?.role === 'admin');
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+      }
+    };
+
+    checkAdminRole();
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -40,6 +63,15 @@ const Header = () => {
                   </Badge>
                 )}
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/admin")}
+                >
+                  <Settings className="w-5 h-5" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
