@@ -72,7 +72,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-lg font-bold text-accent">
-              £{product.price.toFixed(2)}
+              KES {product.price.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">
               {product.stock_quantity > 0 ? (

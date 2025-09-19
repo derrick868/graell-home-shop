@@ -151,7 +151,7 @@ const ProductDetailPage = () => {
               </Badge>
               <h1 className="text-3xl font-bold text-primary mb-2">{product.name}</h1>
               <p className="text-2xl font-semibold text-accent">
-                £{product.price.toFixed(2)}
+                KES {product.price.toFixed(2)}
               </p>
             </div>
 

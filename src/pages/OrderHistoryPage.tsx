@@ -175,11 +175,11 @@ const OrderHistoryPage = () => {
                       <div className="flex-1">
                         <p className="font-medium">{item.product.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          Quantity: {item.quantity} × £{item.price.toFixed(2)}
+                          Quantity: {item.quantity} × KES {item.price.toFixed(2)}
                         </p>
                       </div>
                       <p className="font-semibold">
-                        £{(item.price * item.quantity).toFixed(2)}
+                        KES {(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   ))}
@@ -189,7 +189,7 @@ const OrderHistoryPage = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Total:</span>
                     <span className="text-lg font-bold text-primary">
-                      £{order.total_amount.toFixed(2)}
+                      KES {order.total_amount.toFixed(2)}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">

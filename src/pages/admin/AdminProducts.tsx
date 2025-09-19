@@ -247,12 +247,26 @@ const AdminProducts = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="image_url">Image URL</Label>
+                  <Label htmlFor="image_file">Product Image</Label>
                   <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    id="image_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // For now, we'll create a placeholder URL
+                        // In a real app, you'd upload to storage and get the URL
+                        const url = URL.createObjectURL(file);
+                        setFormData({ ...formData, image_url: url });
+                      }
+                    }}
                   />
+                  {formData.image_url && (
+                    <div className="mt-2">
+                      <img src={formData.image_url} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="category">Category</Label>
@@ -299,7 +313,7 @@ const AdminProducts = () => {
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories?.name}</TableCell>
-                <TableCell>${product.price}</TableCell>
+                <TableCell>KES {product.price}</TableCell>
                 <TableCell>{product.stock_quantity}</TableCell>
                 <TableCell>
                   <Badge variant={product.is_active ? "default" : "secondary"}>

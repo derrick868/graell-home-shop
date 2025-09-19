@@ -18,10 +18,9 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
-    address: "",
+    phone: "",
     city: "",
-    postalCode: "",
-    country: "United Kingdom",
+    country: "Kenya",
   });
 
   useEffect(() => {
@@ -43,10 +42,10 @@ const CheckoutPage = () => {
   const handleSubmitOrder = async () => {
     if (!user || items.length === 0) return;
 
-    if (!shippingInfo.address || !shippingInfo.city || !shippingInfo.postalCode) {
+    if (!shippingInfo.phone || !shippingInfo.city) {
       toast({
         title: "Incomplete Information",
-        description: "Please fill in all shipping details",
+        description: "Please fill in all required details",
         variant: "destructive",
       });
       return;
@@ -55,7 +54,7 @@ const CheckoutPage = () => {
     setLoading(true);
 
     try {
-      const shippingAddress = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`;
+      const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
       const totalAmount = getCartTotal();
 
       // Create order
@@ -124,43 +123,32 @@ const CheckoutPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <Input
-                  id="address"
-                  placeholder="Street address"
-                  value={shippingInfo.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  id="phone"
+                  placeholder="Phone number"
+                  value={shippingInfo.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   required
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    placeholder="City"
-                    value={shippingInfo.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="postalCode">Postal Code</Label>
-                  <Input
-                    id="postalCode"
-                    placeholder="Postal code"
-                    value={shippingInfo.postalCode}
-                    onChange={(e) => handleInputChange("postalCode", e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  placeholder="City"
+                  value={shippingInfo.city}
+                  onChange={(e) => handleInputChange("city", e.target.value)}
+                  required
+                />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
                 <Input
                   id="country"
+                  placeholder="Kenya"
                   value={shippingInfo.country}
                   onChange={(e) => handleInputChange("country", e.target.value)}
                   required
@@ -181,11 +169,11 @@ const CheckoutPage = () => {
                     <div className="flex-1">
                       <p className="font-medium">{item.product.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Quantity: {item.quantity} × £{item.product.price.toFixed(2)}
+                        Quantity: {item.quantity} × KES {item.product.price.toFixed(2)}
                       </p>
                     </div>
                     <p className="font-semibold">
-                      £{(item.product.price * item.quantity).toFixed(2)}
+                      KES {(item.product.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -196,7 +184,7 @@ const CheckoutPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>£{getCartTotal().toFixed(2)}</span>
+                  <span>KES {getCartTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping:</span>
@@ -205,7 +193,7 @@ const CheckoutPage = () => {
                 <Separator />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total:</span>
-                  <span className="text-primary">£{getCartTotal().toFixed(2)}</span>
+                  <span className="text-primary">KES {getCartTotal().toFixed(2)}</span>
                 </div>
               </div>
 
