@@ -115,49 +115,72 @@ const AdminProducts = () => {
     setIsDialogOpen(true);
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    let imageUrl = null;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      let imageUrl = null;
 
-    if (file) {
-      const filePath = `products/${Date.now()}-${file.name}`;
-      console.log("Uploading to:", filePath);
+      if (file) {
+        const filePath = `products/${Date.now()}-${file.name}`;
+        console.log("Uploading to:", filePath);
 
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage
+          .from("product-images")
+          .upload(filePath, file);
 
-      if (uploadError) {
-  console.error("Upload error:", uploadError);
-  throw uploadError;
-}
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw uploadError;
+        }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
+        const { data: publicUrlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(filePath);
 
-      imageUrl = publicUrlData.publicUrl;
-      console.log("File uploaded! Public URL:", imageUrl);
+        imageUrl = publicUrlData.publicUrl;
+        console.log("File uploaded! Public URL:", imageUrl);
+      }
+
+      const { data, error } = await supabase
+        .from("products")
+        .insert([
+          {
+            ...formData,
+            price: parseFloat(formData.price),
+            stock_quantity: parseInt(formData.stock_quantity),
+            image_url: imageUrl,
+          },
+        ])
+        .select();
+
+      console.log("Insert result:", { data, error });
+
+      if (error) {
+        console.error("Insert error details:", error);
+        toast({
+          title: "Insert failed",
+          description: `${error.message} | ${error.details || ""} | ${error.hint || ""}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Product added successfully!",
+      });
+      setIsDialogOpen(false);
+      fetchProducts();
+      resetForm();
+    } catch (error: any) {
+      console.error("Error saving product:", error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     }
-
-    const { error: insertError } = await supabase.from("products").insert([
-      {
-        ...formData,
-        image_url: imageUrl,
-      },
-    ]);
-
-    if (insertError) {
-  console.error("Insert error:", insertError);
-  throw insertError;
-}
-    alert("Product added successfully!");
-  } catch (error: any) {
-    console.error("Error saving product:", error.message);
-    alert("Error saving product: " + error.message);
-  }
-};
+  };
 
   const handleDelete = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
