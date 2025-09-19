@@ -1,16 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   id: string;
@@ -36,13 +55,13 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    stock_quantity: '',
-    image_url: '',
-    category_id: '',
-    is_active: true
+    name: "",
+    description: "",
+    price: "",
+    stock_quantity: "",
+    image_url: "",
+    category_id: "",
+    is_active: true,
   });
   const { toast } = useToast();
 
@@ -54,21 +73,23 @@ const AdminProducts = () => {
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
-        .from('products')
-        .select(`
+        .from("products")
+        .select(
+          `
           *,
           categories (name)
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
       toast({
         title: "Error",
         description: "Failed to fetch products",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -76,26 +97,26 @@ const AdminProducts = () => {
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
-        .from('categories')
-        .select('id, name')
-        .order('name');
+        .from("categories")
+        .select("id, name")
+        .order("name");
 
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
-      price: '',
-      stock_quantity: '',
-      image_url: '',
-      category_id: '',
-      is_active: true
+      name: "",
+      description: "",
+      price: "",
+      stock_quantity: "",
+      image_url: "",
+      category_id: "",
+      is_active: true,
     });
     setFile(null);
     setEditingProduct(null);
@@ -105,12 +126,12 @@ const AdminProducts = () => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      description: product.description || '',
+      description: product.description || "",
       price: product.price.toString(),
       stock_quantity: product.stock_quantity.toString(),
-      image_url: product.image_url || '',
+      image_url: product.image_url || "",
       category_id: product.category_id,
-      is_active: product.is_active
+      is_active: product.is_active,
     });
     setIsDialogOpen(true);
   };
@@ -129,7 +150,7 @@ const AdminProducts = () => {
           .upload(filePath, file);
 
         if (uploadError) {
-          console.error("Upload error:", uploadError);
+          console.error("Upload error:", JSON.stringify(uploadError, null, 2));
           throw uploadError;
         }
 
@@ -141,7 +162,7 @@ const AdminProducts = () => {
         console.log("File uploaded! Public URL:", imageUrl);
       }
 
-      const { data, error } = await supabase
+      const { data, error: insertError } = await supabase
         .from("products")
         .insert([
           {
@@ -153,57 +174,57 @@ const AdminProducts = () => {
         ])
         .select();
 
-      console.log("Insert result:", { data, error });
-
-      if (error) {
-        console.error("Insert error details:", error);
+      if (insertError) {
+        console.error("Insert error:", JSON.stringify(insertError, null, 2));
         toast({
           title: "Insert failed",
-          description: `${error.message} | ${error.details || ""} | ${error.hint || ""}`,
+          description: JSON.stringify(insertError, null, 2),
           variant: "destructive",
         });
         return;
       }
 
+      console.log("Inserted product:", data);
       toast({
         title: "Success",
         description: "Product added successfully!",
       });
+
       setIsDialogOpen(false);
-      fetchProducts();
       resetForm();
+      fetchProducts();
     } catch (error: any) {
-      console.error("Error saving product:", error.message);
+      console.error("Error saving product:", JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive"
+        description: error.message || "Failed to save product",
+        variant: "destructive",
       });
     }
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
       const { error } = await supabase
-        .from('products')
+        .from("products")
         .delete()
-        .eq('id', productId);
+        .eq("id", productId);
 
       if (error) throw error;
-      
+
       toast({
         title: "Success",
-        description: "Product deleted successfully"
+        description: "Product deleted successfully",
       });
       fetchProducts();
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error("Error deleting product:", error);
       toast({
         title: "Error",
         description: "Failed to delete product",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -223,7 +244,7 @@ const AdminProducts = () => {
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
+                  {editingProduct ? "Edit Product" : "Add New Product"}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -232,7 +253,9 @@ const AdminProducts = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -241,7 +264,9 @@ const AdminProducts = () => {
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                   />
                 </div>
                 <div>
@@ -251,7 +276,9 @@ const AdminProducts = () => {
                     type="number"
                     step="0.01"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -261,7 +288,12 @@ const AdminProducts = () => {
                     id="stock"
                     type="number"
                     value={formData.stock_quantity}
-                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        stock_quantity: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
@@ -278,18 +310,31 @@ const AdminProducts = () => {
                   />
                   {formData.image_url && !file && (
                     <div className="mt-2">
-                      <img src={formData.image_url} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                      <img
+                        src={formData.image_url}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded"
+                      />
                     </div>
                   )}
                   {file && (
                     <div className="mt-2">
-                      <img src={URL.createObjectURL(file)} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded"
+                      />
                     </div>
                   )}
                 </div>
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <Select
+                    value={formData.category_id}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category_id: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -303,11 +348,15 @@ const AdminProducts = () => {
                   </Select>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit">
-                    {editingProduct ? 'Update' : 'Create'}
+                    {editingProduct ? "Update" : "Create"}
                   </Button>
                 </div>
               </form>
@@ -335,8 +384,10 @@ const AdminProducts = () => {
                 <TableCell>KES {product.price}</TableCell>
                 <TableCell>{product.stock_quantity}</TableCell>
                 <TableCell>
-                  <Badge variant={product.is_active ? "default" : "secondary"}>
-                    {product.is_active ? 'Active' : 'Inactive'}
+                  <Badge
+                    variant={product.is_active ? "default" : "secondary"}
+                  >
+                    {product.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </TableCell>
                 <TableCell>
