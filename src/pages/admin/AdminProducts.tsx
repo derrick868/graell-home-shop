@@ -48,6 +48,51 @@ interface Category {
   name: string;
 }
 
+// ✅ Admin-only upload helper
+async function uploadProductImage(file: File) {
+  // 1. Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("You must be logged in to upload images.");
+
+  // 2. Check if user is admin
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) throw profileError;
+  if (!profile || profile.role !== "admin") {
+    throw new Error("Only admins can upload product images.");
+  }
+
+  // 3. Prepare file path
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}.${fileExt}`;
+  const filePath = `products/${fileName}`;
+
+  // 4. Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(filePath, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  // 5. Get public URL
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("product-images").getPublicUrl(filePath);
+
+  return { publicUrl, path: filePath };
+}
+
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -139,26 +184,11 @@ const AdminProducts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      let imageUrl = null;
+      let imageUrl = formData.image_url;
 
       if (file) {
-        const filePath = `products/${Date.now()}-${file.name}`;
-        console.log("Uploading to:", filePath);
-
-        const { error: uploadError } = await supabase.storage
-          .from("product-images")
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error("Upload error:", JSON.stringify(uploadError, null, 2));
-          throw uploadError;
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(filePath);
-
-        imageUrl = publicUrlData.publicUrl;
+        const { publicUrl } = await uploadProductImage(file);
+        imageUrl = publicUrl;
         console.log("File uploaded! Public URL:", imageUrl);
       }
 
@@ -175,16 +205,15 @@ const AdminProducts = () => {
         .select();
 
       if (insertError) {
-        console.error("Insert error:", JSON.stringify(insertError, null, 2));
+        console.error("Insert error:", insertError);
         toast({
           title: "Insert failed",
-          description: JSON.stringify(insertError, null, 2),
+          description: insertError.message,
           variant: "destructive",
         });
         return;
       }
 
-      console.log("Inserted product:", data);
       toast({
         title: "Success",
         description: "Product added successfully!",
@@ -194,7 +223,7 @@ const AdminProducts = () => {
       resetForm();
       fetchProducts();
     } catch (error: any) {
-      console.error("Error saving product:", JSON.stringify(error, null, 2));
+      console.error("Error saving product:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save product",
