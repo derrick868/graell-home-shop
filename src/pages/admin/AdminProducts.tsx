@@ -129,9 +129,9 @@ const AdminProducts = () => {
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error("Upload error:", uploadError.message);
-        throw uploadError;
-      }
+  console.error("Upload error:", uploadError);
+  throw uploadError;
+}
 
       const { data: publicUrlData } = supabase.storage
         .from("product-images")
@@ -149,10 +149,9 @@ const AdminProducts = () => {
     ]);
 
     if (insertError) {
-      console.error("Insert error:", insertError.message);
-      throw insertError;
-    }
-
+  console.error("Insert error:", insertError);
+  throw insertError;
+}
     alert("Product added successfully!");
   } catch (error: any) {
     console.error("Error saving product:", error.message);
