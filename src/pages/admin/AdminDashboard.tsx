@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, ShoppingCart, Users, TrendingUp } from 'lucide-react';
+import { Package, ShoppingCart, Users, TrendingUp, Home } from 'lucide-react';
 import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
 import AdminCategories from './AdminCategories';
+import AdminUsers from './AdminUsers';
 
 const AdminDashboard = () => {
   const { user, loading } = useAuth();
@@ -98,9 +99,17 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage your store from here</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage your store from here</p>
+          </div>
+          <Link to="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Back to Homepage
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
@@ -148,10 +157,11 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Tabs defaultValue="products" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
           
           <TabsContent value="products" className="space-y-4">
@@ -164,6 +174,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="categories" className="space-y-4">
             <AdminCategories />
+          </TabsContent>
+          
+          <TabsContent value="users" className="space-y-4">
+            <AdminUsers />
           </TabsContent>
         </Tabs>
       </div>
