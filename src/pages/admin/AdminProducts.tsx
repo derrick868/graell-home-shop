@@ -184,6 +184,31 @@ const AdminProducts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Check if user is authenticated and admin
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("You must be logged in to add products.");
+
+      console.log("Current user:", user.id);
+
+      // Check admin status
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        throw new Error("Failed to check user permissions.");
+      }
+      
+      if (!profile || profile.role !== "admin") {
+        throw new Error("Only admins can manage products.");
+      }
+
+      console.log("User is admin, proceeding with product save");
+
       let imageUrl = formData.image_url;
 
       if (file) {
@@ -193,29 +218,48 @@ const AdminProducts = () => {
       }
 
       const productData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity),
         image_url: imageUrl,
+        category_id: formData.category_id,
+        is_active: formData.is_active,
       };
 
+      console.log("Product data to save:", productData);
+
       if (editingProduct) {
-        const { error } = await supabase
+        console.log("Updating product:", editingProduct.id);
+        const { data, error } = await supabase
           .from("products")
           .update(productData)
-          .eq("id", editingProduct.id);
+          .eq("id", editingProduct.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        console.log("Update result:", data);
+        
         toast({
           title: "Success",
           description: "Product updated successfully!",
         });
       } else {
-        const { error } = await supabase
+        console.log("Inserting new product");
+        const { data, error } = await supabase
           .from("products")
-          .insert([productData]);
+          .insert([productData])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+        console.log("Insert result:", data);
+        
         toast({
           title: "Success",
           description: "Product added successfully!",
