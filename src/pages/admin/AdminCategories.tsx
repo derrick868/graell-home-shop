@@ -18,10 +18,56 @@ interface Category {
   created_at: string;
 }
 
+// Admin-only upload helper for categories
+async function uploadCategoryImage(file: File) {
+  // 1. Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("You must be logged in to upload images.");
+
+  // 2. Check if user is admin
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) throw profileError;
+  if (!profile || profile.role !== "admin") {
+    throw new Error("Only admins can upload category images.");
+  }
+
+  // 3. Prepare file path
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}.${fileExt}`;
+  const filePath = `categories/${fileName}`;
+
+  // 4. Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from("category-images")
+    .upload(filePath, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  // 5. Get public URL
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("category-images").getPublicUrl(filePath);
+
+  return { publicUrl, path: filePath };
+}
+
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -58,6 +104,7 @@ const AdminCategories = () => {
       description: '',
       image_url: ''
     });
+    setFile(null);
     setEditingCategory(null);
   };
 
@@ -75,10 +122,18 @@ const AdminCategories = () => {
     e.preventDefault();
 
     try {
+      let imageUrl = formData.image_url;
+
+      if (file) {
+        const { publicUrl } = await uploadCategoryImage(file);
+        imageUrl = publicUrl;
+        console.log("File uploaded! Public URL:", imageUrl);
+      }
+
       const categoryData = {
         name: formData.name,
         description: formData.description || null,
-        image_url: formData.image_url || null
+        image_url: imageUrl || null
       };
 
       if (editingCategory) {
@@ -107,11 +162,11 @@ const AdminCategories = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchCategories();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving category:', error);
       toast({
         title: "Error",
-        description: "Failed to save category",
+        description: error.message || "Failed to save category",
         variant: "destructive"
       });
     }
@@ -180,12 +235,34 @@ const AdminCategories = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="image_url">Image URL</Label>
+                  <Label htmlFor="image_file">Category Image</Label>
                   <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    id="image_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const selectedFile = e.target.files?.[0] || null;
+                      setFile(selectedFile);
+                    }}
                   />
+                  {formData.image_url && !file && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.image_url}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                    </div>
+                  )}
+                  {file && (
+                    <div className="mt-2">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>

@@ -192,32 +192,35 @@ const AdminProducts = () => {
         console.log("File uploaded! Public URL:", imageUrl);
       }
 
-      const { data, error: insertError } = await supabase
-        .from("products")
-        .insert([
-          {
-            ...formData,
-            price: parseFloat(formData.price),
-            stock_quantity: parseInt(formData.stock_quantity),
-            image_url: imageUrl,
-          },
-        ])
-        .select();
+      const productData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock_quantity: parseInt(formData.stock_quantity),
+        image_url: imageUrl,
+      };
 
-      if (insertError) {
-        console.error("Insert error:", insertError);
+      if (editingProduct) {
+        const { error } = await supabase
+          .from("products")
+          .update(productData)
+          .eq("id", editingProduct.id);
+
+        if (error) throw error;
         toast({
-          title: "Insert failed",
-          description: insertError.message,
-          variant: "destructive",
+          title: "Success",
+          description: "Product updated successfully!",
         });
-        return;
-      }
+      } else {
+        const { error } = await supabase
+          .from("products")
+          .insert([productData]);
 
-      toast({
-        title: "Success",
-        description: "Product added successfully!",
-      });
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Product added successfully!",
+        });
+      }
 
       setIsDialogOpen(false);
       resetForm();
