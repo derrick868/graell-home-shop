@@ -63,8 +63,8 @@ async function uploadProductImage(file: File) {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
-    .single();
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   if (profileError) throw profileError;
   if (!profile || profile.role !== "admin") {
