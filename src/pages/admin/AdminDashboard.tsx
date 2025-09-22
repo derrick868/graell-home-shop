@@ -34,7 +34,7 @@ const AdminDashboard = () => {
           .from('profiles')
           .select('role')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         setIsAdmin(profile?.role === 'admin');
       } catch (error) {
