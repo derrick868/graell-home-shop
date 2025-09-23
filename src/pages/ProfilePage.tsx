@@ -93,10 +93,15 @@ const ProfilePage = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .upsert({
-          user_id: user.id,
-          ...profile,
-        });
+        .upsert(
+          {
+            id: user.id,
+            user_id: user.id,
+            email: user.email || profile.email,
+            ...profile,
+          },
+          { onConflict: "id" }
+        );
 
       if (error) throw error;
 

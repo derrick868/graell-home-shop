@@ -16,6 +16,7 @@ interface Order {
     first_name: string;
     last_name: string;
     email: string;
+    phone: string;
   };
 }
 
@@ -48,13 +49,13 @@ const AdminOrders = () => {
         (data || []).map(async (order) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name, email')
+            .select('first_name, last_name, email, phone')
             .eq('user_id', order.user_id)
             .single();
 
           return {
             ...order,
-            profiles: profile || { first_name: '', last_name: '', email: '' }
+            profiles: profile || { first_name: '', last_name: '', email: '', phone: '' }
           };
         })
       );
@@ -125,6 +126,7 @@ const AdminOrders = () => {
               <TableHead>Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -153,6 +155,7 @@ const AdminOrders = () => {
                 <TableCell>
                   {new Date(order.created_at).toLocaleDateString()}
                 </TableCell>
+                <TableCell>{order.profiles?.phone || '-'}</TableCell>
                 <TableCell>
                   <Select
                     value={order.status}
