@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Bell, Trash } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // 👈 if you’re using React Router
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [open, setOpen] = useState(false); // 🔔 panel toggle
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch unread messages + orders
   useEffect(() => {
@@ -80,15 +82,9 @@ const Notifications = () => {
 
   const deleteNotification = async (id: string, type: string) => {
     if (type === "message") {
-      await supabase
-        .from("contact_messages")
-        .update({ seen: true })
-        .eq("id", id.replace("msg-", ""));
+      await supabase.from("contact_messages").update({ seen: true }).eq("id", id.replace("msg-", ""));
     } else if (type === "order") {
-      await supabase
-        .from("orders")
-        .update({ seen: true })
-        .eq("id", id.replace("order-", ""));
+      await supabase.from("orders").update({ seen: true }).eq("id", id.replace("order-", ""));
     }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
@@ -101,11 +97,8 @@ const Notifications = () => {
 
   return (
     <div className="relative p-6">
-      {/* 🔔 Bell with badge */}
-      <button
-        className="relative"
-        onClick={() => setOpen((prev) => !prev)}
-      >
+      {/* Bell Icon with Badge */}
+      <button className="relative" onClick={() => setOpen((prev) => !prev)}>
         <Bell className="w-6 h-6" />
         {notifications.length > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
@@ -114,7 +107,7 @@ const Notifications = () => {
         )}
       </button>
 
-      {/* Notification Dropdown */}
+      {/* Dropdown */}
       {open && (
         <div className="absolute right-0 mt-4 w-80 bg-white shadow-lg rounded-lg p-4 z-50">
           <h2 className="text-lg font-bold mb-2">Notifications</h2>
@@ -126,11 +119,20 @@ const Notifications = () => {
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className="flex justify-between items-center bg-gray-50 shadow p-2 rounded-lg"
+                  className="flex justify-between items-center bg-gray-50 shadow p-2 rounded-lg cursor-pointer"
+                  onClick={() => {
+                    if (n.type === "order") {
+                      const orderId = n.id.replace("order-", "");
+                      navigate(`/admin/orders/${orderId}`); // 👈 Go to single order page
+                    }
+                  }}
                 >
                   <span>{n.message}</span>
                   <button
-                    onClick={() => deleteNotification(n.id, n.type)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent navigation
+                      deleteNotification(n.id, n.type);
+                    }}
                     className="text-red-500 hover:text-red-700"
                   >
                     <Trash className="w-4 h-4" />
