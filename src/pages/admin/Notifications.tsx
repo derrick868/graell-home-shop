@@ -4,12 +4,12 @@ import { Bell, Trash } from "lucide-react";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [open, setOpen] = useState(false); // 🔔 panel toggle
 
   // Fetch unread messages + orders
   useEffect(() => {
     fetchInitial();
 
-    // Subscribe to realtime
     const subscription = supabase
       .channel("notifications")
       .on(
@@ -48,7 +48,6 @@ const Notifications = () => {
   }, []);
 
   const fetchInitial = async () => {
-    // Fetch unread messages
     const { data: messages } = await supabase
       .from("contact_messages")
       .select("id, full_name, created_at")
@@ -56,7 +55,6 @@ const Notifications = () => {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    // Fetch unread orders
     const { data: orders } = await supabase
       .from("orders")
       .select("id, created_at")
@@ -80,7 +78,6 @@ const Notifications = () => {
     setNotifications(formatted);
   };
 
-  // Delete one notification
   const deleteNotification = async (id: string, type: string) => {
     if (type === "message") {
       await supabase
@@ -96,7 +93,6 @@ const Notifications = () => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  // Clear all notifications
   const clearAll = async () => {
     await supabase.from("contact_messages").update({ seen: true }).eq("seen", false);
     await supabase.from("orders").update({ seen: true }).eq("seen", false);
@@ -104,39 +100,55 @@ const Notifications = () => {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        <Bell className="w-5 h-5" /> Notifications
-      </h2>
-
-      <div className="mt-4 space-y-3">
-        {notifications.length === 0 ? (
-          <p className="text-gray-500">No new notifications</p>
-        ) : (
-          notifications.map((n) => (
-            <div
-              key={n.id}
-              className="flex justify-between items-center bg-white shadow p-3 rounded-lg"
-            >
-              <span>{n.message}</span>
-              <button
-                onClick={() => deleteNotification(n.id, n.type)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <Trash className="w-4 h-4" />
-              </button>
-            </div>
-          ))
+    <div className="relative p-6">
+      {/* 🔔 Bell with badge */}
+      <button
+        className="relative"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <Bell className="w-6 h-6" />
+        {notifications.length > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+            {notifications.length}
+          </span>
         )}
-      </div>
+      </button>
 
-      {notifications.length > 0 && (
-        <button
-          onClick={clearAll}
-          className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-        >
-          Clear All
-        </button>
+      {/* Notification Dropdown */}
+      {open && (
+        <div className="absolute right-0 mt-4 w-80 bg-white shadow-lg rounded-lg p-4 z-50">
+          <h2 className="text-lg font-bold mb-2">Notifications</h2>
+
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="text-gray-500">No new notifications</p>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="flex justify-between items-center bg-gray-50 shadow p-2 rounded-lg"
+                >
+                  <span>{n.message}</span>
+                  <button
+                    onClick={() => deleteNotification(n.id, n.type)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {notifications.length > 0 && (
+            <button
+              onClick={clearAll}
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 w-full"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
