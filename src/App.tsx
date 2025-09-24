@@ -20,6 +20,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminContacts from "./pages/admin/AdminContacts";
+import SingleOrder from "./pages/admin/SingleOrder";
 
 import NotFound from "./pages/NotFound";
 
@@ -51,7 +52,8 @@ const App = () => (
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="contacts" element={<AdminContacts />} />
               </Route>
-           
+           <Route path="/admin/orders/:id" element={<SingleOrder />} />
+
              
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
