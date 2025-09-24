@@ -12,7 +12,7 @@ import AdminCategories from "./AdminCategories";
 import AdminUsers from "./AdminUsers";
 import AdminContacts from "./AdminContacts";
 import AdminRevenue from "./AdminRevenue";
-
+import Notifications from "./Notifications"; // <- make sure this file exists
 
 const AdminDashboard = () => {
   const { user, loading } = useAuth();
@@ -101,21 +101,23 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
+        {/* header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
             <p className="text-muted-foreground">Manage your store from here</p>
           </div>
+
           <div className="flex items-center gap-4">
-  
-              <Notifications />
-          <Link to="/">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Back to Homepage
-            </Button>
-          </Link>
-        </div>
+            <Notifications />
+            <Link to="/">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Back to Homepage
+              </Button>
+            </Link>
+          </div>
+        </div> {/* <- header closed here */}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -178,10 +180,8 @@ const AdminDashboard = () => {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
-            
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
-
           </TabsList>
 
           {/* Tab contents */}
@@ -189,12 +189,8 @@ const AdminDashboard = () => {
           <TabsContent value="orders"><AdminOrders /></TabsContent>
           <TabsContent value="categories"><AdminCategories /></TabsContent>
           <TabsContent value="users"><AdminUsers /></TabsContent>
-          
-          <TabsContent value="revenue">
-          <AdminRevenue />
-        </TabsContent>
+          <TabsContent value="revenue"><AdminRevenue /></TabsContent>
           <TabsContent value="contacts"><AdminContacts /></TabsContent>
-
         </Tabs>
       </div>
     </div>
