@@ -11,6 +11,8 @@ import AdminOrders from "./AdminOrders";
 import AdminCategories from "./AdminCategories";
 import AdminUsers from "./AdminUsers";
 import AdminContacts from "./AdminContacts";
+import AdminRevenue from "./AdminRevenue";
+
 
 const AdminDashboard = () => {
   const { user, loading } = useAuth();
@@ -173,7 +175,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            
+            <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
+
           </TabsList>
 
           {/* Tab contents */}
@@ -181,7 +186,12 @@ const AdminDashboard = () => {
           <TabsContent value="orders"><AdminOrders /></TabsContent>
           <TabsContent value="categories"><AdminCategories /></TabsContent>
           <TabsContent value="users"><AdminUsers /></TabsContent>
+          
+          <TabsContent value="revenue">
+          <AdminRevenue />
+        </TabsContent>
           <TabsContent value="contacts"><AdminContacts /></TabsContent>
+
         </Tabs>
       </div>
     </div>
