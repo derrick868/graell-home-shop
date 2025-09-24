@@ -138,7 +138,7 @@ const ContactPage = () => {
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-muted-foreground">gshiku97@gmail.com</p>
+                    <p className="text-muted-foreground">graell254@gmail.com</p>
                   </div>
                 </div>
                 
