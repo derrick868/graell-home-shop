@@ -100,7 +100,7 @@ const ProfilePage = () => {
             email: user.email || profile.email,
             ...profile,
           },
-          { onConflict: "id" }
+          { onConflict: "user_id" }
         );
 
       if (error) throw error;
