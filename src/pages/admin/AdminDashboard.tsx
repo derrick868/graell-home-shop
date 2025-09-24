@@ -159,7 +159,7 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Tabs defaultValue="products" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="flex w-full justify-between gap-2">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
