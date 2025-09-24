@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -23,25 +25,35 @@ const ContactPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+  const { error } = await supabase.from("contact_messages").insert([
+    {
+      name: formData.name,
+      email: formData.email,
+      subject: formData.subject,
+      message: formData.message,
+    },
+  ]);
 
+  if (error) {
+    console.error("Error saving message:", error);
+    toast({
+      title: "Error",
+      description: "Something went wrong. Please try again.",
+      variant: "destructive",
+    });
+  } else {
     toast({
       title: "Message Sent!",
       description: "Thank you for your message. We'll get back to you soon.",
     });
+    setFormData({ name: "", email: "", subject: "", message: "" });
+  }
 
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    });
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   return (
     <Layout>
