@@ -46,7 +46,7 @@ const AdminRevenue = () => {
             {deliveredCount}
           </p>
           <p className="text-lg">
-            <span className="font-semibold">Delivered Revenue:</span> $
+            <span className="font-semibold">Delivered Revenue:</span> KES:
             {deliveredRevenue.toFixed(2)}
           </p>
         </div>
