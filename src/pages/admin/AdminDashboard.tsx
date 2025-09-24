@@ -10,6 +10,8 @@ import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
 import AdminCategories from './AdminCategories';
 import AdminUsers from './AdminUsers';
+import AdminContacts from "./AdminContacts";
+
 
 const AdminDashboard = () => {
   const { user, loading } = useAuth();
