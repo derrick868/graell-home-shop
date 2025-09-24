@@ -126,7 +126,7 @@ const ContactPage = () => {
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-muted-foreground">hello@graellinteriors.com</p>
+                    <p className="text-muted-foreground">gshiku97@gmail.com</p>
                   </div>
                 </div>
                 
@@ -134,7 +134,7 @@ const ContactPage = () => {
                   <Phone className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Phone</p>
-                    <p className="text-muted-foreground">+44 20 1234 5678</p>
+                    <p className="text-muted-foreground">+254 701 406 923</p>
                   </div>
                 </div>
                 
@@ -143,8 +143,8 @@ const ContactPage = () => {
                   <div>
                     <p className="font-medium">Address</p>
                     <p className="text-muted-foreground">
-                      123 Design Street<br />
-                      London, UK W1A 1AA
+                      Nairobi <br />
+                      kenya
                     </p>
                   </div>
                 </div>
