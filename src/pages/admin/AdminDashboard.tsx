@@ -162,6 +162,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
           </TabsList>
           
           <TabsContent value="products" className="space-y-4">
@@ -178,6 +179,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="users" className="space-y-4">
             <AdminUsers />
+          </TabsContent>
+
+          <TabsContent value="contacts" className="space-y-4">
+            <AdminContacts />
           </TabsContent>
         </Tabs>
       </div>
