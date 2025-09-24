@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 import ProductCard from "@/components/ProductCard";
-import CategoryFilter from "@/components/CategoryFilter";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Product {
@@ -23,6 +22,41 @@ interface Category {
   id: string;
   name: string;
 }
+
+// ✅ CategoryFilter defined outside
+const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }) => {
+  return (
+    <div className="flex flex-wrap gap-2 justify-center">
+      <button
+        onClick={() => onCategoryChange("all")}
+        className={`px-3 py-1 rounded-full text-sm ${
+          selectedCategory === "all"
+            ? "bg-primary text-white"
+            : "bg-muted text-muted-foreground"
+        }`}
+      >
+        All
+      </button>
+
+      {categories.map((cat) => {
+        const slug = cat.name.toLowerCase().replace(/\s+/g, "-");
+        return (
+          <button
+            key={cat.id}
+            onClick={() => onCategoryChange(slug)}
+            className={`px-3 py-1 rounded-full text-sm ${
+              selectedCategory === slug
+                ? "bg-primary text-white"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {cat.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const ProductsPage = () => {
   const { category: categoryParam } = useParams();
@@ -77,9 +111,10 @@ const ProductsPage = () => {
         .order("name");
 
       if (selectedCategory !== "all") {
-        // Find category by name
-        const category = categories.find(cat => 
-          cat.name.toLowerCase().replace(/\s+/g, '-') === selectedCategory.toLowerCase()
+        const category = categories.find(
+          (cat) =>
+            cat.name.toLowerCase().replace(/\s+/g, "-") ===
+            selectedCategory.toLowerCase()
         );
         if (category) {
           query = query.eq("category_id", category.id);
@@ -87,8 +122,8 @@ const ProductsPage = () => {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
+
       setProducts(data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -112,9 +147,12 @@ const ProductsPage = () => {
       <div className="space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary mb-2">Our Products</h1>
-          <p className="text-muted-foreground">Discover our beautiful collection of home and kitchen essentials</p>
+          <p className="text-muted-foreground">
+            Discover our beautiful collection of home and kitchen essentials
+          </p>
         </div>
 
+        {/* ✅ Use CategoryFilter here */}
         <CategoryFilter
           categories={categories}
           selectedCategory={selectedCategory}
@@ -142,7 +180,9 @@ const ProductsPage = () => {
 
         {!loading && products.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No products found in this category.</p>
+            <p className="text-muted-foreground">
+              No products found in this category.
+            </p>
           </div>
         )}
       </div>
