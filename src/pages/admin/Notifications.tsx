@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Bell, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export default function Notifications() {
+ {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   // Fetch unread messages + orders
