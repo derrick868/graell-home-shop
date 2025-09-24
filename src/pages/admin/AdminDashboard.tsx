@@ -106,6 +106,9 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
             <p className="text-muted-foreground">Manage your store from here</p>
           </div>
+          <div className="flex items-center gap-4">
+  
+              <Notifications />
           <Link to="/">
             <Button variant="outline" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
