@@ -11,7 +11,7 @@ import AdminOrders from './AdminOrders';
 import AdminCategories from './AdminCategories';
 import AdminUsers from './AdminUsers';
 import AdminContacts from './AdminContacts';
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, ShoppingCart, Users, TrendingUp, Mail } from "lucide-react";
 
@@ -120,7 +120,7 @@ const AdminDashboard = () => {
         {/* Stats Cards */}
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
   {/* Products */}
-  <Link href="/admin/products">
+   <Link to="/admin/products">
     <Card className="cursor-pointer hover:shadow-lg transition">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
   </Link>
 
   {/* Orders */}
-  <Link href="/admin/orders">
+  <Link to="/admin/orders">
     <Card className="cursor-pointer hover:shadow-lg transition">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
   </Link>
 
   {/* Customers */}
-  <Link href="/admin/users">
+  <Link to="/admin/users">
     <Card className="cursor-pointer hover:shadow-lg transition">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
   </Link>
 
   {/* Revenue */}
-  <Link href="/admin/revenue">
+  <Link to="/admin/revenue">
     <Card className="cursor-pointer hover:shadow-lg transition">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
   </Link>
 
   {/* Contacts */}
-  <Link href="/admin/contacts">
+  <Link to="/admin/contacts">
     <Card className="cursor-pointer hover:shadow-lg transition">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
