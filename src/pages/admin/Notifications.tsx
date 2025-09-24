@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Bell, Trash } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
- {
+const Notifications = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   // Fetch unread messages + orders
@@ -18,7 +17,11 @@ import { Badge } from "@/components/ui/badge";
         { event: "INSERT", schema: "public", table: "contact_messages" },
         (payload) => {
           setNotifications((prev) => [
-            { id: payload.new.id, type: "message", message: `New message from ${payload.new.full_name}` },
+            {
+              id: `msg-${payload.new.id}`,
+              type: "message",
+              message: `New message from ${payload.new.full_name}`,
+            },
             ...prev,
           ]);
         }
@@ -28,7 +31,11 @@ import { Badge } from "@/components/ui/badge";
         { event: "INSERT", schema: "public", table: "orders" },
         (payload) => {
           setNotifications((prev) => [
-            { id: payload.new.id, type: "order", message: `New order #${payload.new.id}` },
+            {
+              id: `order-${payload.new.id}`,
+              type: "order",
+              message: `New order #${payload.new.id}`,
+            },
             ...prev,
           ]);
         }
@@ -45,7 +52,7 @@ import { Badge } from "@/components/ui/badge";
     const { data: messages } = await supabase
       .from("contact_messages")
       .select("id, full_name, created_at")
-      .eq("seen", false) // only unseen
+      .eq("seen", false)
       .order("created_at", { ascending: false })
       .limit(5);
 
@@ -76,9 +83,15 @@ import { Badge } from "@/components/ui/badge";
   // Delete one notification
   const deleteNotification = async (id: string, type: string) => {
     if (type === "message") {
-      await supabase.from("contact_messages").update({ seen: true }).eq("id", id.replace("msg-", ""));
+      await supabase
+        .from("contact_messages")
+        .update({ seen: true })
+        .eq("id", id.replace("msg-", ""));
     } else if (type === "order") {
-      await supabase.from("orders").update({ seen: true }).eq("id", id.replace("order-", ""));
+      await supabase
+        .from("orders")
+        .update({ seen: true })
+        .eq("id", id.replace("order-", ""));
     }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
@@ -127,7 +140,6 @@ import { Badge } from "@/components/ui/badge";
       )}
     </div>
   );
-}
-
+};
 
 export default Notifications;
