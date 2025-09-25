@@ -22,7 +22,6 @@ const SingleOrder = () => {
           status,
           order_items (
             id,
-            product_name,
             quantity,
             price
           )
@@ -80,7 +79,7 @@ const SingleOrder = () => {
           <table className="w-full border mt-2">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-2 border">Product</th>
+                {/* <th className="p-2 border">Product</th> */}
                 <th className="p-2 border">Quantity</th>
                 <th className="p-2 border">Price</th>
                 <th className="p-2 border">Total</th>
@@ -89,7 +88,7 @@ const SingleOrder = () => {
             <tbody>
               {order.order_items.map((item: any) => (
                 <tr key={item.id}>
-                  <td className="p-2 border">{item.product_name}</td>
+                  {/* <td className="p-2 border">{item.product_name}</td> */}
                   <td className="p-2 border">{item.quantity}</td>
                   <td className="p-2 border">KES {item.price}</td>
                   <td className="p-2 border">
