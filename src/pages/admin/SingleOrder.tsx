@@ -9,33 +9,29 @@ const SingleOrder = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          `
-          id,
-          created_at,
-          total_amount,
-          status,
-          profile:profiles (
-            first_name,
-            email
-          ),
-          order_items (
-            id,
-            quantity,
-            price,
-            product:products (
-              name
-            )
-          )
-        `
-        )
-        .eq("id", id)
-        .maybeSingle();
+const { data, error } = await supabase
+  .from("orders")
+  .select(`
+    id,
+    created_at,
+    total_amount,
+    status,
+    profiles (
+      first_name,
+      email
+    ),
+    order_items (
+      id,
+      quantity,
+      price,
+      products (
+        name
+      )
+    )
+  `)
+  .eq("id", id)
+  .maybeSingle();
+
 
       if (error) {
         console.error("Error fetching order:", error);
