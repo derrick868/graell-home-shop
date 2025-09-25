@@ -186,9 +186,43 @@ const CheckoutPage = () => {
               </div>
             </CardContent>
           </Card>
+{/* Order Summary */}
+<Card>
+  <CardHeader>
+    <CardTitle>Order Summary</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div
+          key={item.product_id}
+          className="flex justify-between text-sm"
+        >
+          <span>
+            {item.product.name} × {item.quantity}
+          </span>
+          <span>KES {item.product.price * item.quantity}</span>
+        </div>
+      ))}
+    </div>
 
-          {/* Order Summary */}
-          {/* ... existing code unchanged ... */}
+    <Separator />
+
+    <div className="flex justify-between font-semibold">
+      <span>Total</span>
+      <span>KES {getCartTotal()}</span>
+    </div>
+
+    <Button
+      className="w-full"
+      onClick={handleSubmitOrder}
+      disabled={loading}
+    >
+      {loading ? "Placing Order..." : "Place Order"}
+    </Button>
+  </CardContent>
+</Card>
+
         </div>
       </div>
     </Layout>
