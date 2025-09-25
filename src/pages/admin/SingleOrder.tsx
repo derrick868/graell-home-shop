@@ -20,8 +20,6 @@ const SingleOrder = () => {
           created_at,
           total_amount,
           status,
-          customer_name,
-          customer_email,
           order_items (
             id,
             product_name,
