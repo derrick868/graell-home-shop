@@ -23,7 +23,8 @@ const SingleOrder = () => {
           status,
           profiles (
             first_name,
-            email
+            email,
+            phone
           ),
           order_items (
             id,
@@ -79,6 +80,9 @@ const SingleOrder = () => {
         </p>
         <p>
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
+        </p>
+        <p>
+          <strong>phone:</strong> {order.profiles?.phone || "N/A"}
         </p>
       </div>
 
