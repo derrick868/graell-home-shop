@@ -20,10 +20,17 @@ const SingleOrder = () => {
           created_at,
           total_amount,
           status,
+          profile:profiles (
+            first_name,
+            email
+          ),
           order_items (
             id,
             quantity,
-            price
+            price,
+            product:products (
+              name
+            )
           )
         `
         )
@@ -61,25 +68,29 @@ const SingleOrder = () => {
       <h1 className="text-2xl font-bold mt-4 mb-2">
         Order #{order.id}
       </h1>
-      <p className="text-gray-600">Placed on {new Date(order.created_at).toLocaleString()}</p>
+      <p className="text-gray-600">
+        Placed on {new Date(order.created_at).toLocaleString()}
+      </p>
 
+      {/* Customer details */}
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong> {order.customer_name}
+          <strong>Name:</strong> {order.profile?.first_name || "N/A"}
         </p>
         <p>
-          <strong>Email:</strong> {order.customer_email}
+          <strong>Email:</strong> {order.profile?.email || "N/A"}
         </p>
       </div>
 
+      {/* Order items */}
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Order Items</h2>
         {order.order_items && order.order_items.length > 0 ? (
           <table className="w-full border mt-2">
             <thead>
               <tr className="bg-gray-100">
-                {/* <th className="p-2 border">Product</th> */}
+                <th className="p-2 border">Product</th>
                 <th className="p-2 border">Quantity</th>
                 <th className="p-2 border">Price</th>
                 <th className="p-2 border">Total</th>
@@ -88,7 +99,7 @@ const SingleOrder = () => {
             <tbody>
               {order.order_items.map((item: any) => (
                 <tr key={item.id}>
-                  {/* <td className="p-2 border">{item.product_name}</td> */}
+                  <td className="p-2 border">{item.product?.name || "Unknown"}</td>
                   <td className="p-2 border">{item.quantity}</td>
                   <td className="p-2 border">KES {item.price}</td>
                   <td className="p-2 border">
@@ -103,6 +114,7 @@ const SingleOrder = () => {
         )}
       </div>
 
+      {/* Summary */}
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Order Summary</h2>
         <p>
