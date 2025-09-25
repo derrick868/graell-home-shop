@@ -9,29 +9,34 @@ const SingleOrder = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-const { data, error } = await supabase
-  .from("orders")
-  .select(`
-    id,
-    created_at,
-    total_amount,
-    status,
-    profiles (
-      first_name,
-      email
-    ),
-    order_items (
-      id,
-      quantity,
-      price,
-      products (
-        name
-      )
-    )
-  `)
-  .eq("id", id)
-  .maybeSingle();
+  useEffect(() => {
+    const fetchOrder = async () => {
+      setLoading(true);
 
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          id,
+          created_at,
+          total_amount,
+          status,
+          profiles (
+            first_name,
+            email
+          ),
+          order_items (
+            id,
+            quantity,
+            price,
+            products (
+              name
+            )
+          )
+        `
+        )
+        .eq("id", id)
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching order:", error);
@@ -61,9 +66,7 @@ const { data, error } = await supabase
         <ArrowLeft className="w-4 h-4" /> Back to Orders
       </Link>
 
-      <h1 className="text-2xl font-bold mt-4 mb-2">
-        Order #{order.id}
-      </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-2">Order #{order.id}</h1>
       <p className="text-gray-600">
         Placed on {new Date(order.created_at).toLocaleString()}
       </p>
@@ -72,10 +75,10 @@ const { data, error } = await supabase
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong> {order.profile?.first_name || "N/A"}
+          <strong>Name:</strong> {order.profiles?.first_name || "N/A"}
         </p>
         <p>
-          <strong>Email:</strong> {order.profile?.email || "N/A"}
+          <strong>Email:</strong> {order.profiles?.email || "N/A"}
         </p>
       </div>
 
@@ -95,7 +98,9 @@ const { data, error } = await supabase
             <tbody>
               {order.order_items.map((item: any) => (
                 <tr key={item.id}>
-                  <td className="p-2 border">{item.product?.name || "Unknown"}</td>
+                  <td className="p-2 border">
+                    {item.products?.name || "Unknown"}
+                  </td>
                   <td className="p-2 border">{item.quantity}</td>
                   <td className="p-2 border">KES {item.price}</td>
                   <td className="p-2 border">
