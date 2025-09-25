@@ -38,73 +38,85 @@ const CheckoutPage = () => {
   const handleInputChange = (field: string, value: string) => {
     setShippingInfo(prev => ({ ...prev, [field]: value }));
   };
+const handleSubmitOrder = async () => {
+  if (!user || items.length === 0) return;
 
-  const handleSubmitOrder = async () => {
-    if (!user || items.length === 0) return;
+  if (!shippingInfo.phone || !shippingInfo.city) {
+    toast({
+      title: "Incomplete Information",
+      description: "Please fill in all required details",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    if (!shippingInfo.phone || !shippingInfo.city) {
-      toast({
-        title: "Incomplete Information",
-        description: "Please fill in all required details",
-        variant: "destructive",
-      });
-      return;
+  setLoading(true);
+
+  try {
+    const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
+    const totalAmount = getCartTotal();
+
+    // 1. Get the profile for the logged-in user
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      throw new Error("Profile not found for this user");
     }
 
-    setLoading(true);
+    // 2. Create order with profile_id
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        profile_id: profile.id, // ✅ now linking to profiles table
+        user_id: user.id,       // optional, keep if you still want user_id reference
+        total_amount: totalAmount,
+        shipping_address: shippingAddress,
+        status: "pending",
+      })
+      .select()
+      .single();
 
-    try {
-      const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
-      const totalAmount = getCartTotal();
+    if (orderError) throw orderError;
 
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          total_amount: totalAmount,
-          shipping_address: shippingAddress,
-          status: "pending",
-        })
-        .select()
-        .single();
+    // 3. Insert order items
+    const orderItems = items.map((item) => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.product.price,
+    }));
 
-      if (orderError) throw orderError;
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
 
-      // Create order items
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.product.price,
-      }));
+    if (itemsError) throw itemsError;
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+    // 4. Clear cart
+    await clearCart();
 
-      if (itemsError) throw itemsError;
+    toast({
+      title: "Order Placed Successfully!",
+      description: `Your order #${order.id.slice(0, 8)} has been placed.`,
+    });
 
-      // Clear cart
-      await clearCart();
+    navigate("/orders");
+  } catch (error) {
+    console.error("Error placing order:", error);
+    toast({
+      title: "Order Failed",
+      description: "There was an error placing your order. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${order.id.slice(0, 8)} has been placed.`,
-      });
-
-      navigate("/orders");
-    } catch (error) {
-      console.error("Error placing order:", error);
-      toast({
-        title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!user || items.length === 0) {
     return null;
