@@ -95,7 +95,6 @@ const ProfilePage = () => {
         .from("profiles")
         .upsert(
           {
-            id: user.id,
             user_id: user.id,
             email: user.email || profile.email,
             ...profile,
