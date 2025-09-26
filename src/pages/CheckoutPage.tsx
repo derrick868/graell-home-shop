@@ -18,13 +18,11 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
-    name: "",
-    phone: "",
     city: "",
     country: "Kenya",
   });
 
-  // ✅ Fetch profile phone when component mounts
+  // ✅ Guard routes
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -35,124 +33,111 @@ const CheckoutPage = () => {
       navigate("/cart");
       return;
     }
-
-    const fetchProfilePhone = async () => {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("phone")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching profile phone:", error);
-        return;
-      }
-
-      if (profile?.phone) {
-        setShippingInfo((prev) => ({ ...prev, phone: profile.phone }));
-      } else {
-        toast({
-          title: "No phone number found",
-          description:
-            "Please provide your phone number for this order. You can save it in your profile later for faster checkouts.",
-        });
-      }
-    };
-
-    fetchProfilePhone();
-  }, [user, items, navigate, toast]);
+  }, [user, items, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
   };
 
- const handleSubmitOrder = async () => {
-  if (!user || items.length === 0) return;
+  const handleSubmitOrder = async () => {
+    if (!user || items.length === 0) return;
 
-  if (!shippingInfo.phone || !shippingInfo.city) {
-    toast({
-      title: "Incomplete Information",
-      description: "Please fill in all required details",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
-    const totalAmount = getCartTotal();
-
-    // ✅ Fetch profile for this user
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (profileError || !profile) {
+    if (!shippingInfo.city) {
       toast({
-        title: "Profile Missing",
-        description: "Please update your profile before placing an order.",
+        title: "Incomplete Information",
+        description: "Please fill in all required details",
         variant: "destructive",
       });
-      setLoading(false);
       return;
     }
 
-    // ✅ Create order with profile_id and phone
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: user.id,
-        profile_id: profile.id,
-        total_amount: totalAmount,
-        shipping_address: shippingAddress,
-        name: shippingInfo.name,
-        phone: shippingInfo.phone, // 👈 per-order phone (even if profile has one)
-        status: "pending",
-      })
-      .select()
-      .single();
+    setLoading(true);
 
-    if (orderError) throw orderError;
+    try {
+      const totalAmount = getCartTotal();
 
-    // ✅ Create order items
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.product.price,
-    }));
+      // ✅ Fetch profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, first_name, phone")
+        .eq("user_id", user.id)
+        .single();
 
-    const { error: itemsError } = await supabase
-      .from("order_items")
-      .insert(orderItems);
+      if (profileError || !profile) {
+        toast({
+          title: "Profile Missing",
+          description: "Please update your profile before placing an order.",
+          variant: "destructive",
+        });
+        navigate("/profile");
+        setLoading(false);
+        return;
+      }
 
-    if (itemsError) throw itemsError;
+      // ✅ Require name + phone
+      if (!profile.first_name || !profile.phone) {
+        toast({
+          title: "Profile Incomplete",
+          description:
+            "Please update your profile with your name and phone number before placing an order.",
+          variant: "destructive",
+        });
+        navigate("/profile");
+        setLoading(false);
+        return;
+      }
 
-    // ✅ Clear cart
-    await clearCart();
+      const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country}`;
 
-    toast({
-      title: "Order Placed Successfully!",
-      description: `Your order #${order.id.slice(0, 8)} has been placed.`,
-    });
+      // ✅ Create order
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          profile_id: profile.id,
+          total_amount: totalAmount,
+          shipping_address: shippingAddress,
+          status: "pending",
+        })
+        .select()
+        .single();
 
-    navigate("/orders");
-  } catch (error) {
-    console.error("Error placing order:", error);
-    toast({
-      title: "Order Failed",
-      description: "There was an error placing your order. Please try again.",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      if (orderError) throw orderError;
 
+      // ✅ Create order items
+      const orderItems = items.map((item) => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.product.price,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // ✅ Clear cart
+      await clearCart();
+
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Your order #${order.id.slice(0, 8)} has been placed.`,
+      });
+
+      navigate("/orders");
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast({
+        title: "Order Failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!user || items.length === 0) {
     return null;
@@ -170,30 +155,6 @@ const CheckoutPage = () => {
               <CardTitle>Shipping Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Your name"
-                  value={shippingInfo.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  placeholder="Phone number"
-                  value={shippingInfo.phone}
-                  onChange={(e) =>
-                    handleInputChange("phone", e.target.value)
-                  }
-                  required
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
                 <Input
@@ -219,43 +180,43 @@ const CheckoutPage = () => {
               </div>
             </CardContent>
           </Card>
-{/* Order Summary */}
-<Card>
-  <CardHeader>
-    <CardTitle>Order Summary</CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    <div className="space-y-2">
-      {items.map((item) => (
-        <div
-          key={item.product_id}
-          className="flex justify-between text-sm"
-        >
-          <span>
-            {item.product.name} × {item.quantity}
-          </span>
-          <span>KES {item.product.price * item.quantity}</span>
-        </div>
-      ))}
-    </div>
 
-    <Separator />
+          {/* Order Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div
+                    key={item.product_id}
+                    className="flex justify-between text-sm"
+                  >
+                    <span>
+                      {item.product.name} × {item.quantity}
+                    </span>
+                    <span>KES {item.product.price * item.quantity}</span>
+                  </div>
+                ))}
+              </div>
 
-    <div className="flex justify-between font-semibold">
-      <span>Total</span>
-      <span>KES {getCartTotal()}</span>
-    </div>
+              <Separator />
 
-    <Button
-      className="w-full"
-      onClick={handleSubmitOrder}
-      disabled={loading}
-    >
-      {loading ? "Placing Order..." : "Place Order"}
-    </Button>
-  </CardContent>
-</Card>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>KES {getCartTotal()}</span>
+              </div>
 
+              <Button
+                className="w-full"
+                onClick={handleSubmitOrder}
+                disabled={loading}
+              >
+                {loading ? "Placing Order..." : "Place Order"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
