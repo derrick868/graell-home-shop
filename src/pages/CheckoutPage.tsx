@@ -39,7 +39,7 @@ const CheckoutPage = () => {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("phone")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
