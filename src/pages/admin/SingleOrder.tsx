@@ -8,50 +8,64 @@ const SingleOrder = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      setLoading(true);
+useEffect(() => {
+  const fetchOrder = async () => {
+    setLoading(true);
 
-// 1. Fetch the order + items
-    const { data: orderData, error: orderError } = await supabase
-      .from("orders")
-      .select(`
-        id,
-        created_at,
-        total_amount,
-        name,
-        phone,
-        status,
-        profile_id,
-        order_items!order_id (
+    try {
+      // 1. Fetch the order + items
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .select(`
           id,
-          quantity,
-          price,
-          products ( name )
-        )
-      `)
-      .eq("id", id)
-      .maybeSingle();
-    
-    // 2. If profile_id exists, fetch profile separately
-    let profileData = null;
-    if (orderData?.profile_id) {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("first_name, email, phone")
-        .eq("id", orderData.profile_id)
+          created_at,
+          total_amount,
+          name,
+          phone,
+          status,
+          profile_id,
+          order_items!order_id (
+            id,
+            quantity,
+            price,
+            products ( name )
+          )
+        `)
+        .eq("id", id)
         .maybeSingle();
-      profileData = prof;
-    }
-    
-    setOrder({ ...orderData, profile: profileData });
 
+      if (orderError) {
+        console.error("Error fetching order:", orderError);
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
 
-    if (id) fetchOrder();
-  }, [id]);
+      let profileData = null;
+
+      // 2. If profile_id exists, fetch profile separately
+      if (orderData?.profile_id) {
+        const { data: prof, error: profError } = await supabase
+          .from("profiles")
+          .select("first_name, email, phone")
+          .eq("id", orderData.profile_id)
+          .maybeSingle();
+
+        if (!profError) {
+          profileData = prof;
+        }
+      }
+
+      setOrder({ ...orderData, profile: profileData });
+    } catch (err) {
+      console.error("Unexpected error fetching order:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (id) fetchOrder();
+}, [id]);
+
 
   if (loading) {
     return <p className="p-6">Loading order details...</p>;
