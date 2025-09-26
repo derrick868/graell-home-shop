@@ -1,4 +1,3 @@
-i think my singleorder was already fine(// src/pages/admin/SingleOrder.tsx
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
