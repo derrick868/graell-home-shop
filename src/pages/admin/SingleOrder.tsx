@@ -1,4 +1,3 @@
-// src/pages/admin/SingleOrder.tsx
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -28,7 +27,7 @@ const SingleOrder = () => {
             email,
             phone
           ),
-          order_items (
+          order_items!order_id (
             id,
             quantity,
             price,
@@ -78,13 +77,15 @@ const SingleOrder = () => {
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong> {order.profiles?.first_name || order.name || "N/A"}
+          <strong>Name:</strong>{" "}
+          {order.profiles?.first_name || order.name || "N/A"}
         </p>
         <p>
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
         </p>
         <p>
-          <strong>phone:</strong> {order.profiles?.phone || order.phone || "N/A"}
+          <strong>Phone:</strong>{" "}
+          {order.profiles?.phone || order.phone || "N/A"}
         </p>
       </div>
 
