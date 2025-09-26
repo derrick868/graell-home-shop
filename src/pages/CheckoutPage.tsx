@@ -65,72 +65,92 @@ const CheckoutPage = () => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmitOrder = async () => {
-    if (!user || items.length === 0) return;
+ const handleSubmitOrder = async () => {
+  if (!user || items.length === 0) return;
 
-    if (!shippingInfo.phone || !shippingInfo.city) {
+  if (!shippingInfo.phone || !shippingInfo.city) {
+    toast({
+      title: "Incomplete Information",
+      description: "Please fill in all required details",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
+    const totalAmount = getCartTotal();
+
+    // ✅ Fetch profile for this user
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError || !profile) {
       toast({
-        title: "Incomplete Information",
-        description: "Please fill in all required details",
+        title: "Profile Missing",
+        description: "Please update your profile before placing an order.",
         variant: "destructive",
       });
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    // ✅ Create order with profile_id and phone
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        profile_id: profile.id,
+        total_amount: totalAmount,
+        shipping_address: shippingAddress,
+        phone: shippingInfo.phone, // 👈 per-order phone (even if profile has one)
+        status: "pending",
+      })
+      .select()
+      .single();
 
-    try {
-      const shippingAddress = `${shippingInfo.city}, ${shippingInfo.country} - Phone: ${shippingInfo.phone}`;
-      const totalAmount = getCartTotal();
+    if (orderError) throw orderError;
 
-      // ✅ Save chosen phone into orders
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          total_amount: totalAmount,
-          shipping_address: shippingAddress,
-          phone: shippingInfo.phone, // 👈 store per-order phone
-          status: "pending",
-        })
-        .select()
-        .single();
+    // ✅ Create order items
+    const orderItems = items.map((item) => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.product.price,
+    }));
 
-      if (orderError) throw orderError;
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(orderItems);
 
-      // Insert order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.product.price,
-      }));
+    if (itemsError) throw itemsError;
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+    // ✅ Clear cart
+    await clearCart();
 
-      if (itemsError) throw itemsError;
+    toast({
+      title: "Order Placed Successfully!",
+      description: `Your order #${order.id.slice(0, 8)} has been placed.`,
+    });
 
-      await clearCart();
+    navigate("/orders");
+  } catch (error) {
+    console.error("Error placing order:", error);
+    toast({
+      title: "Order Failed",
+      description: "There was an error placing your order. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${order.id.slice(0, 8)} has been placed.`,
-      });
-
-      navigate("/orders");
-    } catch (error) {
-      console.error("Error placing order:", error);
-      toast({
-        title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!user || items.length === 0) {
     return null;
