@@ -78,7 +78,7 @@ const SingleOrder = () => {
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong> {order.name || "N/A"}
+          <strong>Name:</strong> {order.profiles?.first_name || order.name || "N/A"}
         </p>
         <p>
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
