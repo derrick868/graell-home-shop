@@ -12,38 +12,40 @@ const SingleOrder = () => {
     const fetchOrder = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          `
+// 1. Fetch the order + items
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        created_at,
+        total_amount,
+        name,
+        phone,
+        status,
+        profile_id,
+        order_items!order_id (
           id,
-          created_at,
-          total_amount,
-          name,
-          phone,
-          status,
-          profiles (
-            first_name,
-            email,
-            phone
-          ),
-          order_items!order_id (
-            id,
-            quantity,
-            price,
-            products (
-              name
-            )
-          )
-        `
+          quantity,
+          price,
+          products ( name )
         )
-        .eq("id", id)
+      `)
+      .eq("id", id)
+      .maybeSingle();
+    
+    // 2. If profile_id exists, fetch profile separately
+    let profileData = null;
+    if (orderData?.profile_id) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("first_name, email, phone")
+        .eq("id", orderData.profile_id)
         .maybeSingle();
+      profileData = prof;
+    }
+    
+    setOrder({ ...orderData, profile: profileData });
 
-      if (error) {
-        console.error("Error fetching order:", error);
-      } else {
-        setOrder(data);
       }
       setLoading(false);
     };
