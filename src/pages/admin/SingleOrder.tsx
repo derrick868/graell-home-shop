@@ -84,7 +84,7 @@ const SingleOrder = () => {
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
         </p>
         <p>
-          <strong>phone:</strong> {order.phone || "N/A"}
+          <strong>phone:</strong> {order.profiles?.phone || order.phone || "N/A"}
         </p>
       </div>
 
