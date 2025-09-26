@@ -1,3 +1,4 @@
+i think my singleorder was already fine(// src/pages/admin/SingleOrder.tsx
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -8,64 +9,46 @@ const SingleOrder = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchOrder = async () => {
-    setLoading(true);
+  useEffect(() => {
+    const fetchOrder = async () => {
+      setLoading(true);
 
-    try {
-      // 1. Fetch the order + items
-      const { data: orderData, error: orderError } = await supabase
+      const { data, error } = await supabase
         .from("orders")
-        .select(`
+        .select(
+          `
           id,
           created_at,
           total_amount,
-          name,
-          phone,
           status,
-          profile_id,
-          order_items!order_id (
+          profiles (
+            first_name,
+            email,
+            phone
+          ),
+          order_items (
             id,
             quantity,
             price,
-            products ( name )
+            products (
+              name
+            )
           )
-        `)
+        `
+        )
         .eq("id", id)
         .maybeSingle();
 
-      if (orderError) {
-        console.error("Error fetching order:", orderError);
-        setLoading(false);
-        return;
+      if (error) {
+        console.error("Error fetching order:", error);
+      } else {
+        setOrder(data);
       }
-
-      let profileData = null;
-
-      // 2. If profile_id exists, fetch profile separately
-      if (orderData?.profile_id) {
-        const { data: prof, error: profError } = await supabase
-          .from("profiles")
-          .select("first_name, email, phone")
-          .eq("id", orderData.profile_id)
-          .maybeSingle();
-
-        if (!profError) {
-          profileData = prof;
-        }
-      }
-
-      setOrder({ ...orderData, profile: profileData });
-    } catch (err) {
-      console.error("Unexpected error fetching order:", err);
-    } finally {
       setLoading(false);
-    }
-  };
+    };
 
-  if (id) fetchOrder();
-}, [id]);
-
+    if (id) fetchOrder();
+  }, [id]);
 
   if (loading) {
     return <p className="p-6">Loading order details...</p>;
@@ -93,15 +76,13 @@ useEffect(() => {
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong>{" "}
-          {order.profiles?.first_name || order.name || "N/A"}
+          <strong>Name:</strong> {order.profiles?.first_name || "N/A"}
         </p>
         <p>
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
         </p>
         <p>
-          <strong>Phone:</strong>{" "}
-          {order.profiles?.phone || order.phone || "N/A"}
+          <strong>phone:</strong> {order.profiles?.phone || "N/A"}
         </p>
       </div>
 
@@ -152,4 +133,4 @@ useEffect(() => {
   );
 };
 
-export default SingleOrder;
+export default SingleOrder;)
