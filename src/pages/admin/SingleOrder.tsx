@@ -20,6 +20,8 @@ const SingleOrder = () => {
           id,
           created_at,
           total_amount,
+          name,
+          phone,
           status,
           profiles (
             first_name,
@@ -76,13 +78,13 @@ const SingleOrder = () => {
       <div className="mt-4 p-4 border rounded-lg shadow bg-white">
         <h2 className="text-xl font-semibold mb-2">Customer Details</h2>
         <p>
-          <strong>Name:</strong> {order.profiles?.first_name || "N/A"}
+          <strong>Name:</strong> {order.name || "N/A"}
         </p>
         <p>
           <strong>Email:</strong> {order.profiles?.email || "N/A"}
         </p>
         <p>
-          <strong>phone:</strong> {order.profiles?.phone || "N/A"}
+          <strong>phone:</strong> {order.phone || "N/A"}
         </p>
       </div>
 
