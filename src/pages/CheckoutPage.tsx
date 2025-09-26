@@ -18,6 +18,7 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
+    name: "",
     phone: "",
     city: "",
     country: "Kenya",
@@ -108,6 +109,7 @@ const CheckoutPage = () => {
         profile_id: profile.id,
         total_amount: totalAmount,
         shipping_address: shippingAddress,
+        name: shippingInfo.name,
         phone: shippingInfo.phone, // 👈 per-order phone (even if profile has one)
         status: "pending",
       })
@@ -168,6 +170,17 @@ const CheckoutPage = () => {
               <CardTitle>Shipping Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Your name"
+                  value={shippingInfo.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
