@@ -1,14 +1,12 @@
 {
-  "name": "My Shop",
-  "short_name": "Shop",
-  "description": "A modern e-commerce app with Supabase backend.",
+  "name": "Graell Interiors",
+  "short_name": "Graell",
+  "description": "A modern e-commerce app for home & kitchen essentials.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
-  "id": "/",
-  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -19,6 +17,18 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/512x512-monochrome.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ]
 }
