@@ -1,123 +1,182 @@
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface Product {
   id: string;
   name: string;
-  price: number;
   description: string;
-  image_url?: string;
+  price: number;
+  image_url: string;
+  category_id: string | null;
+  created_at: string;
 }
 
-const AdminProducts: React.FC = () => {
+// Upload helper for product images
+async function uploadProductImage(file: File) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `products/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('product-images')
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+  return { publicUrl: data.publicUrl, path: filePath };
+}
+
+const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    description: "",
-    imageFile: null as File | null,
+    name: '',
+    description: '',
+    price: '',
+    category_id: '',
+    image_url: ''
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const fetchProducts = async () => {
-    const { data, error } = await supabase.from("products").select("*");
-    if (!error && data) {
-      setProducts(data);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch products',
+        variant: 'destructive'
+      });
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, imageFile: e.target.files[0] });
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase.from('categories').select('id, name');
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
-  };
-
-  const handleSave = async () => {
-    let imageUrl = editingProduct?.image_url || null;
-
-    // ✅ Upload image if provided
-    if (formData.imageFile) {
-      const fileExt = formData.imageFile.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `products/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(filePath, formData.imageFile);
-
-      if (uploadError) {
-        console.error("Image upload failed:", uploadError);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
-
-      imageUrl = publicUrlData.publicUrl;
-    }
-
-    if (editingProduct) {
-      await supabase
-        .from("products")
-        .update({
-          name: formData.name,
-          price: parseFloat(formData.price),
-          description: formData.description,
-          image_url: imageUrl,
-        })
-        .eq("id", editingProduct.id);
-    } else {
-      await supabase.from("products").insert([
-        {
-          name: formData.name,
-          price: parseFloat(formData.price),
-          description: formData.description,
-          image_url: imageUrl,
-        },
-      ]);
-    }
-
-    setIsDialogOpen(false);
-    fetchProducts();
-    resetForm();
-  };
-
-  const handleDelete = async (id: string) => {
-    await supabase.from("products").delete().eq("id", id);
-    fetchProducts();
   };
 
   const resetForm = () => {
-    setFormData({ name: "", price: "", description: "", imageFile: null });
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      category_id: '',
+      image_url: ''
+    });
+    setFile(null);
     setEditingProduct(null);
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || '',
+      price: product.price.toString(),
+      category_id: product.category_id || '',
+      image_url: product.image_url || ''
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      let imageUrl = formData.image_url;
+
+      if (file) {
+        const { publicUrl } = await uploadProductImage(file);
+        imageUrl = publicUrl;
+      }
+
+      const productData = {
+        name: formData.name,
+        description: formData.description || null,
+        price: parseFloat(formData.price),
+        image_url: imageUrl || null,
+        category_id: formData.category_id || null
+      };
+
+      if (editingProduct) {
+        const { error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', editingProduct.id);
+
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Product updated successfully' });
+      } else {
+        const { error } = await supabase.from('products').insert(productData);
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Product created successfully' });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save product',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', productId);
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Product deleted successfully' });
+      fetchProducts();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -135,174 +194,133 @@ const AdminProducts: React.FC = () => {
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
-                  {editingProduct ? "Edit Product" : "Add New Product"}
+                  {editingProduct ? 'Edit Product' : 'Add New Product'}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Product Name</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
-                    name="name"
                     value={formData.name}
-                    onChange={handleInputChange}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="price">Price</Label>
                   <Input
                     id="price"
-                    name="price"
                     type="number"
+                    step="0.01"
                     value={formData.price}
-                    onChange={handleInputChange}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                  />
+                  <Label htmlFor="category">Category</Label>
+                  <select
+                    id="category"
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <Label htmlFor="image">Product Image</Label>
+                  <Label htmlFor="image_file">Product Image</Label>
                   <Input
-                    id="image"
+                    id="image_file"
                     type="file"
                     accept="image/*"
-                    onChange={handleFileChange}
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
                   />
+                  {formData.image_url && !file && (
+                    <div className="mt-2">
+                      <img src={formData.image_url} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                    </div>
+                  )}
+                  {file && (
+                    <div className="mt-2">
+                      <img src={URL.createObjectURL(file)} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                    </div>
+                  )}
                 </div>
-                <Button onClick={handleSave}>
-                  {editingProduct ? "Update" : "Save"}
-                </Button>
-              </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">{editingProduct ? 'Update' : 'Create'}</Button>
+                </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-
       <CardContent>
-        <Card>
-          <CardHeader>
-            <CardTitle>Products</CardTitle>
-            <CardDescription>Manage your store products</CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {/* ✅ Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full border">
-                <thead>
-                  <tr>
-                    <th className="border px-4 py-2">Image</th>
-                    <th className="border px-4 py-2">Name</th>
-                    <th className="border px-4 py-2">Price</th>
-                    <th className="border px-4 py-2">Description</th>
-                    <th className="border px-4 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id}>
-                      <td className="border px-4 py-2 text-center">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        ) : (
-                          <span className="text-gray-400">No image</span>
-                        )}
-                      </td>
-                      <td className="border px-4 py-2">{product.name}</td>
-                      <td className="border px-4 py-2">${product.price}</td>
-                      <td className="border px-4 py-2">
-                        {product.description}
-                      </td>
-                      <td className="border px-4 py-2 flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingProduct(product);
-                            setFormData({
-                              name: product.name,
-                              price: product.price.toString(),
-                              description: product.description,
-                              imageFile: null,
-                            });
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* ✅ Mobile Cards */}
-            <div className="md:hidden space-y-4">
-              {products.map((product) => (
-                <Card key={product.id} className="p-4 shadow-md">
-                  {product.image_url && (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-40 object-cover rounded mb-2"
-                    />
-                  )}
-                  <h3 className="font-bold">{product.name}</h3>
-                  <p className="text-sm text-gray-600">
-                    {product.description}
-                  </p>
-                  <p className="text-blue-600 font-semibold">
-                    ${product.price}
-                  </p>
-                  <div className="flex space-x-2 mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingProduct(product);
-                        setFormData({
-                          name: product.name,
-                          price: product.price.toString(),
-                          description: product.description,
-                          imageFile: null,
-                        });
-                        setIsDialogOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Image</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.map((product) => {
+              const categoryName =
+                categories.find((c) => c.id === product.category_id)?.name || '—';
+              return (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    {product.image_url && (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{categoryName}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>{new Date(product.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(product.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
