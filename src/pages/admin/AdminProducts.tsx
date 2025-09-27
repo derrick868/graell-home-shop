@@ -440,101 +440,111 @@ const AdminProducts = () => {
           </Dialog>
         </div>
       </CardHeader>
-<CardContent>
-  {/* ✅ Desktop Table */}
-  <div className="hidden md:block overflow-x-auto">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead>Stock</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {products.map((product) => (
-          <TableRow key={product.id}>
-            <TableCell className="font-medium">{product.name}</TableCell>
-            <TableCell>{product.categories?.name}</TableCell>
-            <TableCell>KES {product.price}</TableCell>
-            <TableCell>{product.stock_quantity}</TableCell>
-            <TableCell>
-              <Badge variant={product.is_active ? "default" : "secondary"}>
-                {product.is_active ? "Active" : "Inactive"}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEdit(product)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDelete(product.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </div>
+<Card>
+  <CardHeader>
+    <CardTitle>Products</CardTitle>
+    <CardDescription>Manage your store products</CardDescription>
+  </CardHeader>
 
-  {/* ✅ Mobile Cards */}
-  <div className="md:hidden space-y-4">
-    {products.map((product) => (
-      <div
-        key={product.id}
-        className="border rounded-lg p-4 shadow-sm bg-card"
-      >
-        <div className="flex justify-between items-start">
-          <h3 className="font-semibold text-lg">{product.name}</h3>
-          <Badge variant={product.is_active ? "default" : "secondary"}>
-            {product.is_active ? "Active" : "Inactive"}
-          </Badge>
+  <CardContent>
+    {/* ✅ Desktop Table */}
+    <div className="hidden md:block overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell>{product.categories?.name}</TableCell>
+              <TableCell>KES {product.price}</TableCell>
+              <TableCell>{product.stock_quantity}</TableCell>
+              <TableCell>
+                <Badge variant={product.is_active ? "default" : "secondary"}>
+                  {product.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(product)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDelete(product.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+
+    {/* ✅ Mobile Cards */}
+    <div className="md:hidden space-y-4">
+      {products.map((product) => (
+        <div
+          key={product.id}
+          className="border rounded-lg p-4 shadow-sm bg-card"
+        >
+          <div className="flex justify-between items-start">
+            <h3 className="font-semibold text-lg">{product.name}</h3>
+            <Badge variant={product.is_active ? "default" : "secondary"}>
+              {product.is_active ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">
+            {product.categories?.name}
+          </p>
+          <p className="text-sm">
+            Price: <span className="font-medium">KES {product.price}</span>
+          </p>
+          <p className="text-sm">Stock: {product.stock_quantity}</p>
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="mt-2 w-full h-32 object-cover rounded"
+            />
+          )}
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(product)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDelete(product.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground mb-2">
-          {product.categories?.name}
-        </p>
-        <p className="text-sm">Price: <span className="font-medium">KES {product.price}</span></p>
-        <p className="text-sm">Stock: {product.stock_quantity}</p>
-        {product.image_url && (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="mt-2 w-full h-32 object-cover rounded"
-          />
-        )}
-        <div className="flex gap-2 mt-3">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleEdit(product)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleDelete(product.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    ))}
-  </div>
-</CardContent>
+      ))}
+    </div>
+  </CardContent>
+</Card>
+
 
   );
 };
