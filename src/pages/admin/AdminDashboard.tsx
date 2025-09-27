@@ -175,7 +175,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Tab buttons */}
-          <TabsList className="flex w-full justify-between gap-2">
+          <TabsList className="flex flex-wrap gap-2">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
