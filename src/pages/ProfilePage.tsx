@@ -71,18 +71,23 @@ const ProfilePage = () => {
         });
       } else {
         // No profile exists yet, set email from auth
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
           email: user.email || "",
         }));
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch profile.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleInputChange = (field: keyof Profile, value: string) => {
-    setProfile(prev => ({ ...prev, [field]: value }));
+    setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -91,23 +96,47 @@ const ProfilePage = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .upsert(
           {
             user_id: user.id,
             email: user.email || profile.email,
-            ...profile,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            phone: profile.phone,
+            address: profile.address,
+            city: profile.city,
+            postal_code: profile.postal_code,
+            country: profile.country,
           },
-          { onConflict: "user_id" }
+          { onConflict: "user_id", returning: "representation" }
         );
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase upsert error:", error);
+        throw error;
+      }
 
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
+
+      // Update local state with returned data (optional)
+      if (data && data.length > 0) {
+        const updatedProfile = data[0];
+        setProfile({
+          first_name: updatedProfile.first_name || "",
+          last_name: updatedProfile.last_name || "",
+          email: updatedProfile.email || "",
+          phone: updatedProfile.phone || "",
+          address: updatedProfile.address || "",
+          city: updatedProfile.city || "",
+          postal_code: updatedProfile.postal_code || "",
+          country: updatedProfile.country || "United Kingdom",
+        });
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -172,7 +201,6 @@ const ProfilePage = () => {
                   id="email"
                   type="email"
                   value={profile.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
                   disabled
                   className="bg-muted"
                 />
