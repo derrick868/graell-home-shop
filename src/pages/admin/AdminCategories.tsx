@@ -282,6 +282,7 @@ const AdminCategories = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Image</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
@@ -291,6 +292,19 @@ const AdminCategories = () => {
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell>
+          {category.image_url ? (
+            <img
+              src={category.image_url}
+              alt={category.name}
+              className="h-16 w-16 object-cover rounded-md border"
+            />
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              No image
+            </span>
+          )}
+        </TableCell>
                 <TableCell>{category.description}</TableCell>
                 <TableCell>
                   {new Date(category.created_at).toLocaleDateString()}
