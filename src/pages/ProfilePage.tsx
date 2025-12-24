@@ -138,10 +138,10 @@ const ProfilePage = () => {
         });
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Full error object:", error);
       toast({
         title: "Update Failed",
-        description: "There was an error updating your profile.",
+        description: error.message || error.details || "There was an error updating your profile.",
         variant: "destructive",
       });
     } finally {
