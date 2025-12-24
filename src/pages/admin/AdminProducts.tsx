@@ -22,6 +22,7 @@ interface Product {
   price: number;
   image_url: string;
   category_id: string | null;
+  stock_quantity: number;
   created_at: string;
 }
 
@@ -52,7 +53,8 @@ const AdminProducts = () => {
     description: '',
     price: '',
     category_id: '',
-    image_url: ''
+    image_url: '',
+    stock_quantity: '0', // new
   });
   const { toast } = useToast();
 
@@ -96,7 +98,8 @@ const AdminProducts = () => {
       description: '',
       price: '',
       category_id: '',
-      image_url: ''
+      image_url: '',
+      stock_quantity: '0',
     });
     setFile(null);
     setEditingProduct(null);
@@ -109,7 +112,8 @@ const AdminProducts = () => {
       description: product.description || '',
       price: product.price.toString(),
       category_id: product.category_id || '',
-      image_url: product.image_url || ''
+      image_url: product.image_url || '',
+      stock_quantity: product.stock_quantity.toString(), // new
     });
     setIsDialogOpen(true);
   };
@@ -130,7 +134,8 @@ const AdminProducts = () => {
         description: formData.description || null,
         price: parseFloat(formData.price),
         image_url: imageUrl || null,
-        category_id: formData.category_id || null
+        category_id: formData.category_id || null,
+        stock_quantity: parseInt(formData.stock_quantity) || 0, // new
       };
 
       if (editingProduct) {
@@ -227,6 +232,17 @@ const AdminProducts = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="stock_quantity">Stock Quantity</Label>
+                  <Input
+                    id="stock_quantity"
+                    type="number"
+                    min="0"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
                   <Label htmlFor="category">Category</Label>
                   <select
                     id="category"
@@ -282,6 +298,7 @@ const AdminProducts = () => {
               <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -305,6 +322,7 @@ const AdminProducts = () => {
                   <TableCell>{categoryName}</TableCell>
                   <TableCell>{product.description}</TableCell>
                   <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>{product.stock_quantity}</TableCell>
                   <TableCell>{new Date(product.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
