@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 interface Product {
@@ -28,18 +28,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+const handleAddToCart = async (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    await addToCart(product.id, 1);
-  };
-
+  await addToCart(product.id, 1);
+};
   return (
     <Card className="group hover:shadow-lg transition-shadow duration-300">
       <Link to={`/product/${product.id}`}>
