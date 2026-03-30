@@ -8,7 +8,7 @@ import { ShoppingCart, User, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const Header = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { getCartItemCount } = useCart();
   const navigate = useNavigate();
   const cartItemCount = getCartItemCount();
