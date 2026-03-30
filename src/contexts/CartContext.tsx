@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface CartItem {
   id: string;
@@ -28,7 +28,6 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType>({} as CartContextType);
-
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -37,12 +36,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // ✅ Generate or get guest_id
+  // --- Guest ID generator ---
   const getGuestId = () => {
-    let guestId = localStorage.getItem('guest_id');
+    let guestId = localStorage.getItem("guest_id");
     if (!guestId) {
       guestId = crypto.randomUUID();
-      localStorage.setItem('guest_id', guestId);
+      localStorage.setItem("guest_id", guestId);
     }
     return guestId;
   };
@@ -51,18 +50,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user ? { user_id: user.id } : { guest_id: getGuestId() };
   };
 
+  // --- Fetch cart items ---
   useEffect(() => {
     fetchCartItems();
   }, [user]);
 
   const fetchCartItems = async () => {
     setLoading(true);
-
     const identifier = getIdentifier();
 
     try {
       const { data, error } = await supabase
-        .from('shopping_cart')
+        .from("shopping_cart")
         .select(`
           id,
           product_id,
@@ -78,21 +77,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .match(identifier);
 
       if (error) throw error;
-
       setItems(data || []);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
+    } catch (err) {
+      console.error("Error fetching cart:", err);
+      toast({ title: "Error", description: "Failed to fetch cart items", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Add to cart ---
   const addToCart = async (productId: string, quantity = 1) => {
     const identifier = getIdentifier();
 
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from("shopping_cart")
         .upsert(
           {
             ...identifier,
@@ -100,31 +100,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             quantity,
           },
           {
-            onConflict: 'product_id,user_id,guest_id',
+            // Must match a UNIQUE constraint in Supabase
+            onConflict: "product_id,user_id,guest_id",
           }
         );
 
       if (error) throw error;
-
       await fetchCartItems();
 
-      toast({
-        title: "Added to Cart",
-        description: "Item added successfully",
-      });
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add item",
-        variant: "destructive",
-      });
+      toast({ title: "Added to Cart", description: "Item added successfully" });
+    } catch (err) {
+      console.error("Error adding to cart:", err);
+      toast({ title: "Error", description: "Failed to add item", variant: "destructive" });
     }
   };
 
+  // --- Update quantity ---
   const updateQuantity = async (productId: string, quantity: number) => {
     const identifier = getIdentifier();
-
     if (quantity <= 0) {
       await removeFromCart(productId);
       return;
@@ -132,57 +125,57 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from("shopping_cart")
         .update({ quantity })
         .match({ ...identifier, product_id: productId });
 
       if (error) throw error;
-
       await fetchCartItems();
-    } catch (error) {
-      console.error('Error updating quantity:', error);
+    } catch (err) {
+      console.error("Error updating quantity:", err);
+      toast({ title: "Error", description: "Failed to update quantity", variant: "destructive" });
     }
   };
 
+  // --- Remove item ---
   const removeFromCart = async (productId: string) => {
     const identifier = getIdentifier();
 
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from("shopping_cart")
         .delete()
         .match({ ...identifier, product_id: productId });
 
       if (error) throw error;
-
       await fetchCartItems();
 
-      toast({
-        title: "Removed",
-        description: "Item removed from cart",
-      });
-    } catch (error) {
-      console.error('Error removing item:', error);
+      toast({ title: "Removed", description: "Item removed from cart" });
+    } catch (err) {
+      console.error("Error removing item:", err);
+      toast({ title: "Error", description: "Failed to remove item", variant: "destructive" });
     }
   };
 
+  // --- Clear cart ---
   const clearCart = async () => {
     const identifier = getIdentifier();
 
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from("shopping_cart")
         .delete()
         .match(identifier);
 
       if (error) throw error;
-
       setItems([]);
-    } catch (error) {
-      console.error('Error clearing cart:', error);
+    } catch (err) {
+      console.error("Error clearing cart:", err);
+      toast({ title: "Error", description: "Failed to clear cart", variant: "destructive" });
     }
   };
 
+  // --- Cart totals ---
   const getCartTotal = () =>
     items.reduce((total, item) => total + item.product.price * item.quantity, 0);
 
