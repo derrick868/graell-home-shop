@@ -12,15 +12,15 @@ const CartPage = () => {
   const { items, updateQuantity, removeFromCart, getCartTotal, loading } = useCart();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
+  // useEffect(() => {
+  //   if (!user) {
+  //     navigate("/auth");
+  //   }
+  // }, [user, navigate]);
 
-  if (!user) {
-    return null;
-  }
+  // if (!user) {
+  //   return null;
+  // }
 
   if (loading) {
     return (
