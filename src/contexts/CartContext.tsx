@@ -27,24 +27,9 @@ interface CartContextType {
   getCartItemCount: () => number;
 }
 
-const CartContext = createContext<CartContextType>({
-  items: [],
-  loading: false,
-  addToCart: async () => {},
-  updateQuantity: async () => {},
-  removeFromCart: async () => {},
-  clearCart: async () => {},
-  getCartTotal: () => 0,
-  getCartItemCount: () => 0,
-});
+const CartContext = createContext<CartContextType>({} as CartContextType);
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+export const useCart = () => useContext(CartContext);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -52,19 +37,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch cart items when user logs in
-  useEffect(() => {
-    if (user) {
-      fetchCartItems();
-    } else {
-      setItems([]);
+  // ✅ Generate or get guest_id
+  const getGuestId = () => {
+    let guestId = localStorage.getItem('guest_id');
+    if (!guestId) {
+      guestId = crypto.randomUUID();
+      localStorage.setItem('guest_id', guestId);
     }
+    return guestId;
+  };
+
+  const getIdentifier = () => {
+    return user ? { user_id: user.id } : { guest_id: getGuestId() };
+  };
+
+  useEffect(() => {
+    fetchCartItems();
   }, [user]);
 
   const fetchCartItems = async () => {
-    if (!user) return;
-    
     setLoading(true);
+
+    const identifier = getIdentifier();
+
     try {
       const { data, error } = await supabase
         .from('shopping_cart')
@@ -80,65 +75,55 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             stock_quantity
           )
         `)
-        .eq('user_id', user.id);
+        .match(identifier);
 
       if (error) throw error;
+
       setItems(data || []);
     } catch (error) {
       console.error('Error fetching cart:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load cart items",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
   };
 
   const addToCart = async (productId: string, quantity = 1) => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to add items to cart",
-        variant: "destructive",
-      });
-      return;
-    }
+    const identifier = getIdentifier();
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('shopping_cart')
         .upsert(
           {
-            user_id: user.id,
+            ...identifier,
             product_id: productId,
             quantity,
           },
           {
-            onConflict: 'user_id,product_id',
+            onConflict: 'product_id,user_id,guest_id',
           }
         );
 
       if (error) throw error;
-      
+
       await fetchCartItems();
+
       toast({
         title: "Added to Cart",
-        description: "Item has been added to your cart",
+        description: "Item added successfully",
       });
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast({
         title: "Error",
-        description: "Failed to add item to cart",
+        description: "Failed to add item",
         variant: "destructive",
       });
     }
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
-    if (!user) return;
+    const identifier = getIdentifier();
 
     if (quantity <= 0) {
       await removeFromCart(productId);
@@ -149,89 +134,74 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase
         .from('shopping_cart')
         .update({ quantity })
-        .eq('user_id', user.id)
-        .eq('product_id', productId);
+        .match({ ...identifier, product_id: productId });
 
       if (error) throw error;
+
       await fetchCartItems();
     } catch (error) {
       console.error('Error updating quantity:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update quantity",
-        variant: "destructive",
-      });
     }
   };
 
   const removeFromCart = async (productId: string) => {
-    if (!user) return;
+    const identifier = getIdentifier();
 
     try {
       const { error } = await supabase
         .from('shopping_cart')
         .delete()
-        .eq('user_id', user.id)
-        .eq('product_id', productId);
+        .match({ ...identifier, product_id: productId });
 
       if (error) throw error;
+
       await fetchCartItems();
+
       toast({
-        title: "Removed from Cart",
-        description: "Item has been removed from your cart",
+        title: "Removed",
+        description: "Item removed from cart",
       });
     } catch (error) {
-      console.error('Error removing from cart:', error);
-      toast({
-        title: "Error",
-        description: "Failed to remove item from cart",
-        variant: "destructive",
-      });
+      console.error('Error removing item:', error);
     }
   };
 
   const clearCart = async () => {
-    if (!user) return;
+    const identifier = getIdentifier();
 
     try {
       const { error } = await supabase
         .from('shopping_cart')
         .delete()
-        .eq('user_id', user.id);
+        .match(identifier);
 
       if (error) throw error;
+
       setItems([]);
     } catch (error) {
       console.error('Error clearing cart:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clear cart",
-        variant: "destructive",
-      });
     }
   };
 
-  const getCartTotal = () => {
-    return items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-  };
+  const getCartTotal = () =>
+    items.reduce((total, item) => total + item.product.price * item.quantity, 0);
 
-  const getCartItemCount = () => {
-    return items.reduce((count, item) => count + item.quantity, 0);
-  };
-
-  const value = {
-    items,
-    loading,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    getCartTotal,
-    getCartItemCount,
-  };
+  const getCartItemCount = () =>
+    items.reduce((count, item) => count + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={value}>
+    <CartContext.Provider
+      value={{
+        items,
+        loading,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        getCartTotal,
+        getCartItemCount,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
